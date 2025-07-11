@@ -1,0 +1,108 @@
+name: Autograding Tests
+
+on:
+  - push
+  - workflow_dispatch
+  - repository_dispatch
+
+permissions:
+  checks: write
+  actions: read
+  contents: write
+  pull-requests: write
+
+jobs:
+  run-autograding-tests:
+    runs-on: self-hosted
+    if: github.actor != 'github-classroom[bot]'
+    env:
+      TEST_RESULT_FILE: temp/result.json
+      TEST_FILE: tests/main.test.js
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Cache node_modules
+      uses: actions/cache@v4
+      id: node-cache
+      with:
+        path: node_modules
+        key: ${{ runner.os }}-node-modules-${{ hashFiles('**/package.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-modules-
+
+    - name: Create temp directory
+      run: mkdir -p temp
+
+    - name: Run tests and log results
+      id: tests
+      continue-on-error: true
+      run: |
+        TIMESTAMP=$(date +%Y-%m-%dT%H%M%SZ)
+        REPO_NAME=$(echo $GITHUB_REPOSITORY | cut -d'/' -f2)
+        LOG_FILE="autograde_${REPO_NAME}_${TIMESTAMP}.log"
+        echo "Start grading: ${GITHUB_REPOSITORY} at ${TIMESTAMP}" | tee temp/$LOG_FILE
+        LOG_DIR=/home/gh/log/comp1235/assignment4
+        mkdir -p $LOG_DIR
+        echo "${GITHUB_REPOSITORY},${TIMESTAMP},start" >> ${LOG_DIR}/runs.log
+        
+
+        npx mocha ${{ env.TEST_FILE }} --reporter json > ${{ env.TEST_RESULT_FILE }} 2>> temp/$LOG_FILE || true
+
+        if [ ! -f ${{ env.TEST_RESULT_FILE }} ]; then
+          echo '{"stats":{"tests":0,"passes":0}}' > ${{ env.TEST_RESULT_FILE }}
+          echo "Fallback: test result file not found. Created default." >> temp/$LOG_FILE
+        fi
+
+        TOTAL=$(jq '.stats.tests' ${{ env.TEST_RESULT_FILE }})
+        PASSED=$(jq '.stats.passes' ${{ env.TEST_RESULT_FILE }})
+        
+        if [ "$TOTAL" -gt 0 ]; then
+          SCORE=$(( (PASSED * 100) / TOTAL ))
+        else
+          SCORE=0
+        fi
+
+        echo "Tests run: $TOTAL, Passed: $PASSED" | tee -a temp/$LOG_FILE
+        echo "Score: $SCORE" | tee -a temp/$LOG_FILE
+
+        echo "::notice title=Autograding complete::Points $SCORE/100"
+        echo "::notice title=Autograding report::{ \"totalPoints\": $SCORE, \"maxPoints\": 100 }"
+
+        if [ "$PASSED" -lt "$TOTAL" ]; then
+          echo "::error::Some tests failed" | tee -a temp/$LOG_FILE
+          exit 0
+        fi
+
+        echo "::notice title=Score::$SCORE/100"
+        echo "::notice title=Points::$PASSED/$TOTAL"
+
+        echo "${GITHUB_REPOSITORY},${TIMESTAMP},${SCORE}" >> $LOG_DIR/runs.log
+        cp temp/$LOG_FILE $LOG_DIR/
+
+    - name: Result Summary
+      run: |
+        RESULT=$(cat ${{ env.TEST_RESULT_FILE }} | jq -r '.tests | .[] | select(.err != {}) | .fullTitle')
+
+        if [ -z "$RESULT" ]; then
+          echo "::notice title=Result summary::✅ All tests passed. No errors."
+        else
+          echo "::error::❌ Some tests failed (click for further detail)"
+          echo "$RESULT"
+        fi
+
+    - name: Upload log as artifact
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: autograding-log
+        path: temp/

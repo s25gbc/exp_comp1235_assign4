@@ -52,9 +52,9 @@ jobs:
         REPO_NAME=$(echo $GITHUB_REPOSITORY | cut -d'/' -f2)
         LOG_FILE="autograde_${REPO_NAME}_${TIMESTAMP}.log"
         echo "Start grading: ${GITHUB_REPOSITORY} at ${TIMESTAMP}" | tee temp/$LOG_FILE
-        LOG_DIR=/home/gh/log/comp1235/assignment4
-        mkdir -p $LOG_DIR
-        echo "${GITHUB_REPOSITORY},${TIMESTAMP},start" >> ${LOG_DIR}/runs.log
+        # LOG_DIR=/home/gh/log/comp1235/assignment4
+        # mkdir -p $LOG_DIR
+        # echo "${GITHUB_REPOSITORY},${TIMESTAMP},start" >> ${LOG_DIR}/runs.log
 
         npx mocha ${{ env.TEST_FILE }} --reporter json > ${{ env.TEST_RESULT_FILE }} 2>> temp/$LOG_FILE || true
 
@@ -86,8 +86,8 @@ jobs:
         echo "::notice title=Score::$SCORE/100"
         echo "::notice title=Points::$PASSED/$TOTAL"
 
-        echo "${GITHUB_REPOSITORY},${TIMESTAMP},${SCORE}" >> $LOG_DIR/runs.log
-        cp temp/$LOG_FILE $LOG_DIR/
+        # echo "${GITHUB_REPOSITORY},${TIMESTAMP},${SCORE}" >> $LOG_DIR/runs.log
+        # cp temp/$LOG_FILE $LOG_DIR/
 
     - name: Result Summary
       run: |

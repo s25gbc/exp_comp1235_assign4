@@ -13,7 +13,8 @@ permissions:
 
 jobs:
   run-autograding-tests:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
+    # self-hosted
     if: github.actor != 'github-classroom[bot]'
     env:
       TEST_RESULT_FILE: temp/result.json

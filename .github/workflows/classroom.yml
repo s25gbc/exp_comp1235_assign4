@@ -54,7 +54,6 @@ jobs:
         LOG_DIR=/home/gh/log/comp1235/assignment4
         mkdir -p $LOG_DIR
         echo "${GITHUB_REPOSITORY},${TIMESTAMP},start" >> ${LOG_DIR}/runs.log
-        
 
         npx mocha ${{ env.TEST_FILE }} --reporter json > ${{ env.TEST_RESULT_FILE }} 2>> temp/$LOG_FILE || true
 
@@ -100,9 +99,9 @@ jobs:
           echo "$RESULT"
         fi
 
-    - name: Upload log as artifact
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: autograding-log
-        path: temp/
+    # - name: Upload log as artifact
+    #   if: always()
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: autograding-log
+    #     path: temp/

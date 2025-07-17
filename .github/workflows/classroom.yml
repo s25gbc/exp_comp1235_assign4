@@ -98,10 +98,3 @@ jobs:
           echo "::error::❌ Some tests failed (click for further detail)"
           echo "$RESULT"
         fi
-
-    # - name: Upload log as artifact
-    #   if: always()
-    #   uses: actions/upload-artifact@v4
-    #   with:
-    #     name: autograding-log
-    #     path: temp/

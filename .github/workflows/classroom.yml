@@ -56,4 +56,4 @@ jobs:
           cat ${FEEDBACK_FILE}
           GRADER_POINTS=$(tail -n 1 ${FEEDBACK_FILE}) # The "notice" below transmits the grade to GitHub Classroom
           echo "::notice title=${AG_COMPLETE}::Points ${GRADER_POINTS}/100"
-          echo "::notice title=${AG_REPORT}::{\"totalPoints\":${GRADER_POINTS},\"maxPoints\":100}"
+          echo "::notice title=${AG_REPORT}::{\"totalPoints\":${GRADER_POINTS},\"maxPoints\":100}" 
